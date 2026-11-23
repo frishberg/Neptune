@@ -21,6 +21,7 @@ mod history;
 mod hotkeys;
 mod icons;
 mod overlay;
+mod package;
 mod paste;
 #[cfg(windows)]
 mod pill_native;
@@ -48,9 +49,11 @@ fn main() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            // Second launch just opens the window of the running one.
-            overlay::show_main(app, None);
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // Second launch opens the window of the running one, on
+            // Settings if asked (neptune.exe --settings).
+            let settings = args.iter().any(|a| a == "--settings");
+            overlay::show_main(app, settings.then_some("settings"));
         }))
         .setup(|app| {
             let handle = app.handle().clone();

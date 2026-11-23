@@ -1028,7 +1028,7 @@
     const checkModel = () => (D.isNative ? D.modelCheck(true).then((upd) => { if (upd && !s.modelUpdate) { s.modelUpdate = upd; renderModel(); } }).catch(() => {}) : Promise.resolve());
 
     // Version line, with the update check tucked in.
-    const about = h('div', { class: 'about' }, h('b', {}, 'Neptune ' + version), h('span', {}, 'Free and open source. Offline unless you check for updates.'));
+    const about = h('div', { class: 'about' }, h('b', {}, 'Neptune ' + version), h('span', {}, s.packaged ? 'Free and open source. The Microsoft Store keeps it up to date.' : 'Free and open source. Offline unless you check for updates.'));
     const renderAbout = (state) => {
       [...about.querySelectorAll('.btn, .prog, .note')].forEach((n) => n.remove());
       if (state === 'checking') about.append(h('span', { class: 'note', style: 'margin-left:auto' }, 'Checking…'));

@@ -81,6 +81,8 @@ pub struct SettingsView {
     pub settings: Settings,
     pub mics: Vec<String>,
     pub model_state: String,
+    /// Running as the Microsoft Store package: updates come from the Store.
+    pub packaged: bool,
 }
 
 fn model_dir_for(app: &AppHandle, id: &str) -> Result<std::path::PathBuf, String> {
@@ -110,10 +112,14 @@ pub fn model_state(app: &AppHandle) -> String {
 
 #[tauri::command]
 pub async fn settings_get(app: AppHandle) -> Result<SettingsView, String> {
-    tauri::async_runtime::spawn_blocking(move || SettingsView {
-        settings: settings::get(&app),
-        mics: audio::list_inputs(),
-        model_state: model_state(&app),
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut settings = settings::get(&app);
+        // packaged: Windows owns start at login (the user can switch it in
+        // Settings > Apps > Startup), so show what Windows says
+        if let Some(on) = crate::package::startup_enabled() {
+            settings.autostart = on;
+        }
+        SettingsView { settings, mics: audio::list_inputs(), model_state: model_state(&app), packaged: crate::package::is_packaged() }
     })
     .await
     .map_err(|e| e.to_string())
@@ -129,8 +135,15 @@ pub fn settings_set(app: AppHandle, settings: Settings) {
         let _ = hotkeys::apply(&app, &s);
     }
     if s.autostart != old.autostart {
-        let al = app.autolaunch();
-        let _ = if s.autostart { al.enable() } else { al.disable() };
+        if crate::package::is_packaged() {
+            // the Store package starts at login through its StartupTask
+            if let Err(e) = crate::package::set_startup(s.autostart) {
+                log::error!("start at login: {e}");
+            }
+        } else {
+            let al = app.autolaunch();
+            let _ = if s.autostart { al.enable() } else { al.disable() };
+        }
     }
     if s.pill != old.pill {
         if s.pill { overlay::show(&app) } else { overlay::hide(&app) }
@@ -377,6 +390,11 @@ pub struct UpdateInfo {
 #[tauri::command]
 pub async fn app_update_check(app: AppHandle) -> Result<Option<UpdateInfo>, String> {
     use tauri_plugin_updater::UpdaterExt;
+    // the Store keeps its own copy up to date; the in-app updater would
+    // fetch the .exe installer, which is not how a package updates
+    if crate::package::is_packaged() {
+        return Ok(None);
+    }
     let updater = match app.updater() {
         Ok(u) => u,
         Err(e) => { log::info!("updater not configured: {e}"); return Ok(None); }

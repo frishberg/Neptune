@@ -11,9 +11,10 @@
 **Free voice dictation for Windows that runs entirely on your PC.**
 Hold `Ctrl` + `Space`, talk, let go, and clean text lands wherever your cursor is.
 
-<a href="https://neptunetype.com/#download"><img src="docs/btn-store.svg" alt="Recommended: get it from the Microsoft Store" height="54"></a>
+<!-- STORE_ID: replace with the Store ID from Partner Center once the name is reserved, e.g. https://apps.microsoft.com/detail/9NXXXXXXXXXX -->
+<a href="https://apps.microsoft.com/detail/STORE_ID"><img src="docs/btn-store.svg" alt="Recommended: get it from the Microsoft Store" height="54"></a>
 &nbsp;
-<a href="../../releases/latest"><img src="docs/btn-exe.svg" alt="Direct: download the .exe" height="54"></a>
+<a href="../../releases"><img src="docs/btn-exe.svg" alt="Direct: download the .exe" height="54"></a>
 
 <img src="docs/screenshot.png" width="640" alt="The Neptune window: words spoken, hours saved, streak, speaking speed, the last month as a calendar, and the apps you talk into">
 
@@ -45,6 +46,8 @@ All of them can be changed in Settings.
 
 Your voice is turned into text on your own PC. Audio, text and history never leave it. The speech model downloads once during setup; after that Neptune never goes online, not even to check for updates, unless you click **Check for updates** in Settings. No account, no analytics, no ads. The Microsoft Store version is kept up to date by the Store. Full [Privacy Policy](https://neptunetype.com/privacy/).
 
+How far your voice travels, for scale: Neptune is about 2.8 billion miles away. A Wispr Flow dictation from San Francisco travels about 4,818 miles, to Virginia and back, so about 580,000 of them would carry your voice to Neptune. At 100 a day, that's 16 years. With Neptune, each one travels 1.5 feet: you'd need about 9.8 trillion, or 270 million years.
+
 ## How it works
 
 ```
@@ -57,37 +60,13 @@ hotkey -> mic (16 kHz) -> silence trimmed -> speech model -> cleanup -> paste at
 - **Insert**: a clipboard paste, with your old clipboard put back afterwards.
 - **Hold-to-talk**: a low-level keyboard hook catches the trigger key so it never types. Modifiers are never faked, so Windows always sees your real keys.
 
-## Build from source
-
-Needs Rust (stable), Node 20 and the Visual Studio C++ build tools.
-
-```
-npm ci
-npx tauri build --bundles nsis
-```
-
-The installer lands in `src-tauri/target/release/bundle/nsis/`. To try the UI without building, serve this folder (`python -m http.server 4173`) and open `/overlay/app/index.html?view=home` (or `history`, `settings`, `?onboarding=0`); it runs on sample data.
-
-## Layout
-
-```
-overlay/         the pill (also drawn natively on Windows: src-tauri/src/pill_native.rs)
-overlay/app/     the window: plain HTML, CSS and JS, no framework
-src-tauri/       the Rust backend: hotkeys, audio, inference, paste, history, updates
-src-tauri/windows/installer.nsi   the installer: no pages to click, opens straight into onboarding
-scripts/         icon, share-card and Store art renderers; an idle memory and CPU check
-model.json       the speech model the app should be using (read only by Check for updates)
-```
-
-Data lives in `%APPDATA%\app.blurt` (the folder keeps an older name so existing installs keep their history): `settings.json`, `models/`, and `history/`. Uninstalling removes the speech model; settings and history stay unless you tick the box.
-
 ## Stack
 
 Tauri 2. Rust does everything that touches the OS. The window is plain HTML, CSS and JS in a frameless webview, built only while it's open.
 
-## Releasing
+## Is it free? What's the catch?
 
-Push a `v*` tag and `.github/workflows/release.yml` builds the installer and a draft release with the updater feed (`latest.json`). It signs with Microsoft Trusted Signing when the Azure settings listed at the top of the workflow are set.
+No catch. It's a hobby project I built because I needed it, and it's open source. No account, no ads, no tracking, no money. If you're like so into dictation that you need to give something to someone, please give it to the [Alzheimer's Association](https://www.alz.org/).
 
 ## License
 
