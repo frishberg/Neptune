@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Neptune</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="pill.css">
+</head>
+<body>
+  <!-- The whole window is transparent. Only .pill and .tip are visible. -->
+  <div id="stage" class="stage">
+    <div id="tip" class="tip" aria-hidden="true">
+      <span class="tip-text">Click or hold <kbd>Ctrl</kbd> + <kbd>Space</kbd> to start dictating</span>
+    </div>
+    <div id="pill" class="pill" data-state="idle" role="button" aria-label="Neptune dictation">
+      <div class="line"><i></i></div>
+      <div class="wave"><canvas id="wave"></canvas></div>
+      <button class="ctl cancel" id="cancel" title="Cancel (Esc)" aria-label="Cancel">
+        <svg viewBox="0 0 16 16" width="11" height="11"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="ctl stop" id="stop" title="Finish" aria-label="Finish">
+        <svg viewBox="0 0 16 16" width="14" height="14"><rect x="3" y="3" width="10" height="10" rx="2" fill="currentColor"/></svg>
+      </button>
+      <div class="think"><i></i></div>
+      <div class="done">
+        <span class="badge"><svg viewBox="0 0 16 16" width="12" height="12"><path d="M3.5 8.5l3 3L12.5 5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div>
+      <div class="copy-label" aria-hidden="true"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="8" rx="2"/><path d="M3 11V4a1 1 0 0 1 1-1h7"/></svg><span>Copy</span></div>
+      <div class="err" title="">
+        <span class="badge"><svg viewBox="0 0 16 16" width="12" height="12"><path d="M8 3.5v5.5M8 12.2v.3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+        <span class="err-text" hidden></span>
+      </div>
+    </div>
+  </div>
+  <script src="pill.js"></script>
+</body>
+</html>

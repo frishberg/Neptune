@@ -1,0 +1,222 @@
+/* neptune pill — the always-on-top indicator at the bottom of the screen.
+   Ink, cream, one blue accent. Green only for "pasted", red only for errors.
+   Everything is px because this lives in a fixed overlay window. */
+
+:root {
+  --ink: rgba(18, 18, 22, 0.92);
+  --ink-solid: #141418;
+  --cream: #f4f4ee;
+  --muted: rgba(244, 244, 238, 0.42);
+  --blue: #6ea8ff;
+  --blue-deep: #3d7bff;
+  --green: #34c759;
+  --red: #ff6b5c;
+  --edge: rgba(255, 255, 255, 0.24);
+  --shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 0 12px rgba(0, 0, 0, 0.22);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --slow: 1; /* dev: ?slow=6 stretches every motion for screenshots */
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: -apple-system, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  gap: 8px;
+}
+
+/* ---------- leaving and arriving ---------- */
+/* Hidden: the pill sinks and shrinks into the line it came from. Shown: it
+   blooms back up with a small overshoot. */
+/* One motion: the pill squeezes flat into the bottom edge; shown, it rises back out. */
+@keyframes squeeze { from { transform: none; opacity: 1; } to { transform: translateY(6px) scaleY(0.04) scaleX(0.9); opacity: 0; } }
+@keyframes rise { from { transform: translateY(6px) scaleY(0.04) scaleX(0.9); opacity: 0; } to { transform: none; opacity: 1; } }
+.stage.vanish .pill { animation: squeeze 340ms cubic-bezier(0.5, 0, 0.75, 0) forwards !important; transform-origin: 50% 100%; pointer-events: none; }
+.stage.appear .pill { animation: rise 420ms cubic-bezier(0.2, 0.9, 0.3, 1.05) both !important; transform-origin: 50% 100%; }
+
+/* ---------- pill ---------- */
+
+.pill {
+  position: relative;
+  box-sizing: border-box;
+  height: 26px;
+  width: 84px;
+  border-radius: 999px;
+  background: var(--ink);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--edge);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cream);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    width calc(280ms * var(--slow)) var(--ease-spring),
+    height calc(280ms * var(--slow)) var(--ease-spring),
+    border-color calc(200ms * var(--slow)) ease,
+    transform calc(200ms * var(--slow)) var(--ease-out);
+  will-change: width, height, transform;
+}
+
+.pill:hover { border-color: rgba(255, 255, 255, 0.2); }
+.pill:active { transform: scale(0.97); }
+
+/* Every inner layer is stacked and toggled by state. */
+.pill > * {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity calc(160ms * var(--slow)) ease;
+  pointer-events: none;
+}
+
+/* ---------- idle: one quiet line. The wave grows out of it. ---------- */
+
+.line i {
+  width: 40px; height: 2px;
+  border-radius: 999px;
+  background: rgba(244, 244, 238, 0.55);
+  transition: background-color 200ms ease;
+}
+.pill[data-state="idle"] .line { opacity: 1; }
+.pill[data-state="idle"]:hover .line i { background: rgba(244, 244, 238, 0.7); }
+
+/* ---------- listening: flowing wave on canvas ---------- */
+
+.wave { padding: 0; }
+.wave canvas { width: 100%; height: 100%; display: block; }
+.pill[data-state="listening"] { width: 84px; height: 26px; }
+.pill[data-state="listening"] .wave { opacity: 1; }
+
+/* hands-free: same wave, plus cancel on the left and stop on the right */
+.pill[data-state="handsfree"] { width: 150px; height: 30px; }
+.pill[data-state="handsfree"] .wave { opacity: 1; left: 32px; right: 32px; }
+
+.ctl {
+  inset: auto;
+  top: 50%;
+  width: 22px; height: 22px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  border: 0; padding: 0; font: inherit;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cream);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: opacity calc(160ms * var(--slow)) ease, background-color calc(120ms * var(--slow)) ease;
+}
+.ctl:hover { background: rgba(255, 255, 255, 0.16); }
+.ctl.cancel { left: 7px; }
+.ctl.stop { right: 7px; background: var(--blue); color: #0b1a33; }
+.ctl.stop:hover { background: #8dbbff; }
+.pill[data-state="handsfree"] .ctl { opacity: 1; }
+
+/* ---------- processing: the line, with a blue glow sliding along it ---------- */
+
+.think i {
+  position: relative;
+  width: 40px; height: 2px;
+  border-radius: 999px;
+  background: var(--muted);
+}
+.think i::after {
+  content: "";
+  position: absolute;
+  top: -1px; left: 0;
+  width: 14px; height: 4px;
+  border-radius: 999px;
+  background: var(--blue);
+  box-shadow: 0 0 3px rgba(110, 168, 255, 0.35);
+  animation: slide 1.3s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+}
+@keyframes slide { from { left: 0; } to { left: 26px; } }
+.pill[data-state="processing"] { width: 84px; height: 26px; }
+.pill[data-state="processing"] .think { opacity: 1; }
+
+/* ---------- done / error: one badge, no words ---------- */
+
+.badge {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.done .badge { background: var(--blue); color: #0b1a33; }
+.err .badge { background: var(--red); color: #2a0a06; }
+
+.pill[data-state="done"] { width: 84px; height: 28px; }
+/* the count rides next to the check for a beat */
+/* nowhere to paste: the check lands, then the whole pill becomes a Copy button */
+.copy-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px; font: 600 12px var(--font, system-ui); color: var(--cream); letter-spacing: 0.01em; opacity: 0; transform: translateY(4px); transition: opacity 220ms ease, transform 260ms var(--ease-out); pointer-events: none; }
+.copy-label svg { color: var(--blue); }
+.pill[data-state="done"].offer.ready { width: 100px; }
+.pill[data-state="done"].offer.ready .done { opacity: 0; }
+.pill[data-state="done"].offer.ready .copy-label { opacity: 1; transform: none; }
+.pill[data-state="done"].offer.ready:hover { background: rgba(34, 34, 40, 0.96); }
+.pill[data-state="done"] .done { opacity: 1; }
+.pill[data-state="done"] .badge { animation: pop calc(360ms * var(--slow)) var(--ease-spring); }
+/* leaving: the badge shrinks and fades out over a longer beat than it came in */
+.done { transition: opacity calc(520ms * var(--slow)) var(--ease-out); }
+.done .badge { transition: transform calc(520ms * var(--slow)) var(--ease-out), opacity calc(520ms * var(--slow)) var(--ease-out); }
+.pill:not([data-state="done"]) .done .badge { transform: scale(0.5); opacity: 0; }
+@keyframes pop { from { transform: scale(0.5); } to { transform: scale(1); } }
+
+.pill[data-state="error"] { width: 84px; height: 28px; border-color: rgba(255, 107, 92, 0.45); animation: shake calc(360ms * var(--slow)) ease; }
+.pill[data-state="error"] .err { opacity: 1; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+}
+
+/* ---------- tooltip pill above ---------- */
+
+.tip {
+  box-sizing: border-box;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--edge);
+  box-shadow: var(--shadow);
+  color: var(--cream);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity calc(160ms * var(--slow)) ease, transform calc(220ms * var(--slow)) var(--ease-out);
+  pointer-events: none;
+}
+.tip kbd {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+}
+.stage.show-tip .tip { opacity: 1; transform: translateY(0) scale(1); }
+
+.stage.hidden { display: none; }

@@ -1,0 +1,65 @@
+# Builds the Windows installer for a tagged release and publishes it as a
+# draft GitHub release, with the updater manifest (latest.json) the app checks.
+# Lives in the public app repo (github.com/frishberg/Neptune).
+#
+# Once, in the repo's Settings > Secrets and variables > Actions:
+#   secrets  TAURI_SIGNING_PRIVATE_KEY           contents of ~/.tauri/blurt.key (signs updates)
+#            TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password (empty if none)
+# For a signed installer (the Microsoft Store needs one), after setting up
+# Microsoft Trusted Signing in Azure:
+#   secrets  AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID
+#   vars     AZURE_SIGNING_ENDPOINT   e.g. https://eus.codesigning.azure.net
+#            AZURE_SIGNING_ACCOUNT    the Trusted Signing account name
+#            AZURE_SIGNING_PROFILE    the certificate profile name
+# Without the Azure settings it still builds, just unsigned.
+#
+# Then bump "version" in src-tauri/tauri.conf.json, tag and push:
+#   git tag v1.1.8 && git push origin v1.1.8
+
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+
+      # Signing: Tauri calls this for the app exe and again for the installer
+      - name: Set up Trusted Signing
+        if: ${{ vars.AZURE_SIGNING_ACCOUNT != '' }}
+        shell: pwsh
+        run: |
+          cargo install trusted-signing-cli --locked
+          $cmd = "trusted-signing-cli -e ${{ vars.AZURE_SIGNING_ENDPOINT }} -a ${{ vars.AZURE_SIGNING_ACCOUNT }} -c ${{ vars.AZURE_SIGNING_PROFILE }} -d Neptune %1"
+          @{ bundle = @{ windows = @{ signCommand = $cmd } } } | ConvertTo-Json -Depth 5 | Set-Content src-tauri/sign.json
+          "SIGN_ARGS=--config src-tauri/sign.json" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Neptune ${{ github.ref_name }}"
+          releaseBody: "Free, open-source voice typing that runs locally. Download Neptune_*_x64-setup.exe below."
+          releaseDraft: true
+          prerelease: false
+          args: --bundles nsis ${{ env.SIGN_ARGS }}

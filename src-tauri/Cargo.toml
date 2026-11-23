@@ -1,0 +1,54 @@
+[package]
+name = "neptune"
+version = "1.1.8"
+description = "Free, open-source voice dictation. Hold a key, talk, let go."
+authors = ["Aron Frishberg"]
+license = "MIT"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "macos-private-api", "image-png"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-store = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+log = "0.4"
+env_logger = "0.11"
+
+# audio
+cpal = "0.15"
+rubato = "0.15"
+hound = "3"
+
+# speech. Parakeet through ONNX Runtime (CPU by default). Whisper is opt-in.
+transcribe-rs = { version = "0.3", features = ["onnx"] }
+
+# text insertion
+arboard = "3"
+enigo = "0.3"
+
+# model download
+ureq = "3"
+
+# app icons for history
+png = "0.17"
+tauri-plugin-updater = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_Graphics_Gdi", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_Diagnostics_ToolHelp", "Win32_Graphics_Direct2D", "Win32_Graphics_Direct2D_Common", "Win32_Graphics_DirectWrite", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Dwm", "Win32_System_LibraryLoader", "Win32_System_RemoteDesktop", "Win32_UI_HiDpi", "Win32_UI_Accessibility", "Foundation_Numerics"] }
+
+[target.'cfg(windows)'.dev-dependencies]
+windows = { version = "0.58", features = ["Win32_Media_Audio", "Win32_Media_Audio_Endpoints", "Win32_System_Com", "Win32_Devices_FunctionDiscovery", "Win32_UI_Shell_PropertiesSystem", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

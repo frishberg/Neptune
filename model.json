@@ -1,0 +1,9 @@
+{
+  "model": {
+    "id": "parakeet-tdt-0.6b-v3-int8",
+    "name": "Parakeet TDT 0.6B v3",
+    "url": "https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx/resolve/main",
+    "files": ["config.json", "vocab.txt", "nemo128.onnx", "decoder_joint-model.int8.onnx", "encoder-model.int8.onnx"],
+    "sizes": [97, 93939, 139764, 18202004, 652183999]
+  }
+}

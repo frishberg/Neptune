@@ -1,0 +1,16 @@
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+models/
+*.log
+.DS_Store
+Thumbs.db
+blurt.log
+blurt.out.log
+neptune.log
+neptune.out.log
+debug/
+
+# built apps never go in Git; the release build is copied here to open quickly
+*.exe

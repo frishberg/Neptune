@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Neptune",
+  "version": "1.1.8",
+  "identifier": "app.blurt",
+  "build": {
+    "frontendDist": "../overlay"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "createUpdaterArtifacts": true,
+    "publisher": "Aron Edward Frishberg",
+    "copyright": "(c) 2026 Aron Frishberg. MIT licence.",
+    "shortDescription": "Free, open-source voice typing that runs locally.",
+    "longDescription": "Hold Ctrl+Space, talk, let go, and clean text appears wherever your cursor is. Neptune runs entirely on your PC: no account, no cloud, no word limit.",
+    "category": "Productivity",
+    "homepage": "https://neptunetype.com",
+    "license": "MIT",
+    "windows": {
+      "nsis": {
+        "template": "windows/installer.nsi",
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ4MjE4MjdBNEVDMjFEMzcKUldRM0hjSk9lb0loU0M4MTBzOTJUQ0JBYTlPbHRaTURkaW9paGVCSmZHQTE3WmNRUlJIUEVOSUMK",
+      "endpoints": [
+        "https://github.com/frishberg/Neptune/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}
